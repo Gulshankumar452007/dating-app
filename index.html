@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Dating Website</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        .form-container, .profile-container, .message-container {
+            background: #fff;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input[type="text"], input[type="email"], input[type="password"], textarea {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .profile, .message {
+            border-bottom: 1px solid #ddd;
+            padding: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Simple Dating Website</h1>
+    </header>
+    <div class="container">
+        <!-- Registration Form -->
+        <div class="form-container">
+            <h2>Register</h2>
+            <form id="registrationForm">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+
+        <!-- Profile Display -->
+        <div class="profile-container" id="profileContainer">
+            <h2>Profile</h2>
+            <div id="profileInfo">
+                <!-- User profile information will appear here -->
+            </div>
+        </div>
+
+        <!-- Messaging System -->
+        <div class="message-container">
+            <h2>Messages</h2>
+            <div id="messageList">
+                <!-- Messages will appear here -->
+            </div>
+            <textarea id="messageInput" placeholder="Type your message here..."></textarea>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const profileContainer = document.getElementById('profileContainer');
+        const profileInfo = document.getElementById('profileInfo');
+        const messageList = document.getElementById('messageList');
+        const messageInput = document.getElementById('messageInput');
+
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            profileInfo.innerHTML = `
+                <div class="profile">
+                    <p><strong>Username:</strong> ${username}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                </div>
+            `;
+        });
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                const newMessage = document.createElement('div');
+                newMessage.className = 'message';
+                newMessage.innerHTML = `<p>${message}</p>`;
+                messageList.appendChild(newMessage);
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
