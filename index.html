@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Dating Website</title>
+    <title>Advanced Dating Website</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,14 +22,14 @@
             margin: auto;
             overflow: hidden;
         }
-        .form-container, .profile-container, .message-container, .search-container, .request-container {
+        .form-container, .profile-container, .message-container, .search-container, .request-container, .notification-container {
             background: #fff;
             padding: 2rem;
             margin: 2rem 0;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        input[type="text"], input[type="email"], input[type="password"], textarea {
+        input[type="text"], input[type="email"], input[type="password"], textarea, input[type="file"] {
             width: 100%;
             padding: 0.8rem;
             margin: 0.5rem 0;
@@ -47,29 +47,35 @@
         button:hover {
             background-color: #555;
         }
-        .profile, .message, .friend-request {
+        .profile, .message, .friend-request, .notification {
             border-bottom: 1px solid #ddd;
             padding: 1rem 0;
         }
-        .profile-info, .message-info, .request-info {
+        .profile-info, .message-info, .request-info, .notification-info {
             margin: 0;
         }
-        .user-list, .request-list {
+        .user-list, .request-list, .notification-list {
             list-style: none;
             padding: 0;
         }
-        .user-item, .request-item {
+        .user-item, .request-item, .notification-item {
             padding: 0.5rem;
             border-bottom: 1px solid #ddd;
         }
-        .user-item:last-child, .request-item:last-child {
+        .user-item:last-child, .request-item:last-child, .notification-item:last-child {
             border-bottom: none;
+        }
+        .profile-picture {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Enhanced Dating Website</h1>
+        <h1>Advanced Dating Website</h1>
     </header>
     <div class="container">
         <!-- Registration Form -->
@@ -79,6 +85,7 @@
                 <input type="text" id="registerUsername" placeholder="Username" required>
                 <input type="email" id="registerEmail" placeholder="Email" required>
                 <input type="password" id="registerPassword" placeholder="Password" required>
+                <input type="file" id="registerPicture" accept="image/*">
                 <button type="submit">Register</button>
             </form>
         </div>
@@ -100,6 +107,7 @@
                 <!-- User profile information will appear here -->
             </div>
             <button onclick="editProfile()">Edit Profile</button>
+            <button onclick="logout()">Logout</button>
         </div>
 
         <!-- Profile Editing -->
@@ -108,6 +116,7 @@
             <form id="editProfileForm">
                 <input type="text" id="editUsername" placeholder="Username" required>
                 <input type="text" id="editInterests" placeholder="Interests">
+                <input type="file" id="editPicture" accept="image/*">
                 <button type="submit">Update Profile</button>
             </form>
         </div>
@@ -139,6 +148,14 @@
             <textarea id="messageInput" placeholder="Type your message here..."></textarea>
             <button onclick="sendMessage()">Send</button>
         </div>
+
+        <!-- Notifications -->
+        <div class="notification-container" id="notificationContainer">
+            <h2>Notifications</h2>
+            <ul id="notificationList" class="notification-list">
+                <!-- Notifications will appear here -->
+            </ul>
+        </div>
     </div>
 
     <script>
@@ -152,11 +169,14 @@
         const requestList = document.getElementById('requestList');
         const messageList = document.getElementById('messageList');
         const messageInput = document.getElementById('messageInput');
+        const notificationContainer = document.getElementById('notificationContainer');
+        const notificationList = document.getElementById('notificationList');
         const registrationForm = document.getElementById('registrationForm');
         const loginForm = document.getElementById('loginForm');
         let loggedInUser = null;
         let profiles = [];
         let requests = [];
+        let notifications = [];
 
         // Register user
         registrationForm.addEventListener('submit', function(event) {
@@ -164,9 +184,27 @@
             const username = document.getElementById('registerUsername').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
+            const picture = document.getElementById('registerPicture').files[0];
             
-            profiles.push({ username, email, password, interests: '' });
-            alert('Registration successful! You can now log in.');
+            if (profiles.find(p => p.username === username)) {
+                alert('Username already exists.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                profiles.push({ username, email, password, interests: '', picture: reader.result });
+                alert('Registration successful! You can now log in.');
+                document.getElementById('registerUsername').value = '';
+                document.getElementById('registerEmail').value = '';
+                document.getElementById('registerPassword').value = '';
+                document.getElementById('registerPicture').value = '';
+            };
+            if (picture) {
+                reader.readAsDataURL(picture);
+            } else {
+                reader.onloadend();
+            }
         });
 
         // Login user
@@ -189,43 +227,67 @@
             if (loggedInUser) {
                 profileInfo.innerHTML = `
                     <div class="profile">
+                        <img src="${loggedInUser.picture}" class="profile-picture" alt="${loggedInUser.username}">
                         <p><strong>Username:</strong> ${loggedInUser.username}</p>
                         <p><strong>Interests:</strong> ${loggedInUser.interests}</p>
                     </div>
                 `;
                 profileContainer.style.display = 'block';
-                editProfileContainer.style.display = 'none';
                 searchContainer.style.display = 'block';
                 requestContainer.style.display = 'block';
                 messageList.style.display = 'block';
+                notificationContainer.style.display = 'block';
+                editProfileContainer.style.display = 'none';
+                registrationForm.style.display = 'none';
+                loginForm.style.display = 'none';
+            } else {
+                alert('Please log in.');
             }
         }
 
-        // Edit user profile
+        // Edit profile
         function editProfile() {
             if (loggedInUser) {
                 document.getElementById('editUsername').value = loggedInUser.username;
                 document.getElementById('editInterests').value = loggedInUser.interests;
                 editProfileContainer.style.display = 'block';
+            } else {
+                alert('Please log in.');
             }
         }
 
         // Update profile
         editProfileForm.addEventListener('submit', function(event) {
             event.preventDefault();
-            const newUsername = document.getElementById('editUsername').value;
-            const newInterests = document.getElementById('editInterests').value;
+            const username = document.getElementById('editUsername').value;
+            const interests = document.getElementById('editInterests').value;
+            const picture = document.getElementById('editPicture').files[0];
             
-            loggedInUser.username = newUsername;
-            loggedInUser.interests = newInterests;
-            showProfile();
+            if (username !== loggedInUser.username && profiles.find(p => p.username === username)) {
+                alert('Username already exists.');
+                return;
+            }
+
+            loggedInUser.username = username;
+            loggedInUser.interests = interests;
+
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                loggedInUser.picture = reader.result;
+                showProfile();
+                alert('Profile updated.');
+            };
+            if (picture) {
+                reader.readAsDataURL(picture);
+            } else {
+                reader.onloadend();
+            }
         });
 
         // Search for matches
         function searchMatches() {
-            const searchTerm = document.getElementById('searchInterest').value.toLowerCase();
-            const matches = profiles.filter(p => p.interests.toLowerCase().includes(searchTerm) && p !== loggedInUser);
-            
+            const interest = document.getElementById('searchInterest').value.toLowerCase();
+            const matches = profiles.filter(p => p.interests.toLowerCase().includes(interest) && p.username !== loggedInUser.username);
             matchList.innerHTML = matches.map(p => `
                 <li class="user-item">
                     <p><strong>Username:</strong> ${p.username}</p>
@@ -238,9 +300,10 @@
         // Send a friend request
         function sendFriendRequest(username) {
             const request = profiles.find(p => p.username === username);
-            if (request) {
+            if (request && !requests.find(req => req.from === loggedInUser.username && req.to === request.username)) {
                 requests.push({ from: loggedInUser.username, to: request.username });
                 updateRequestList();
+                showNotification(`Friend request sent to ${request.username}`);
             }
         }
 
@@ -248,8 +311,8 @@
         function updateRequestList() {
             requestList.innerHTML = requests.map(req => `
                 <li class="request-item">
-                    <p><strong>From:</strong> ${req.from}</p>
-                    <p><strong>To:</strong> ${req.to}</p>
+                    <p class="request-info"><strong>From:</strong> ${req.from}</p>
+                    <p class="request-info"><strong>To:</strong> ${req.to}</p>
                     <button onclick="acceptRequest('${req.from}')">Accept</button>
                     <button onclick="rejectRequest('${req.from}')">Reject</button>
                 </li>
@@ -261,6 +324,7 @@
             requests = requests.filter(req => req.from !== from);
             alert(`Friend request from ${from} accepted.`);
             updateRequestList();
+            showNotification(`You are now friends with ${from}`);
         }
 
         // Reject a friend request
@@ -268,6 +332,7 @@
             requests = requests.filter(req => req.from !== from);
             alert(`Friend request from ${from} rejected.`);
             updateRequestList();
+            showNotification(`Friend request from ${from} rejected.`);
         }
 
         // Send a message
@@ -279,7 +344,38 @@
                 newMessage.innerHTML = `<p><strong>${loggedInUser.username}:</strong> ${message}</p>`;
                 messageList.appendChild(newMessage);
                 messageInput.value = '';
+                showNotification('Message sent');
             }
+        }
+
+        // Show a notification
+        function showNotification(text) {
+            notifications.push(text);
+            notificationList.innerHTML = notifications.map((note, index) => `
+                <li class="notification-item">
+                    <p class="notification-info">${note}</p>
+                    <button onclick="removeNotification(${index})">Dismiss</button>
+                </li>
+            `).join('');
+        }
+
+        // Remove a notification
+        function removeNotification(index) {
+            notifications.splice(index, 1);
+            showNotification();
+        }
+
+        // Logout user
+        function logout() {
+            loggedInUser = null;
+            profileContainer.style.display = 'none';
+            searchContainer.style.display = 'none';
+            requestContainer.style.display = 'none';
+            messageList.style.display = 'none';
+            notificationContainer.style.display = 'none';
+            registrationForm.style.display = 'block';
+            loginForm.style.display = 'block';
+            alert('You have logged out.');
         }
 
         // Initialize
@@ -288,6 +384,7 @@
         searchContainer.style.display = 'none';
         requestContainer.style.display = 'none';
         messageList.style.display = 'none';
+        notificationContainer.style.display = 'none';
     </script>
 </body>
 </html>
