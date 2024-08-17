@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Dating Website</title>
+    <title>Enhanced Dating Website</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
             margin: auto;
             overflow: hidden;
         }
-        .form-container, .profile-container, .message-container {
+        .form-container, .profile-container, .message-container, .search-container, .request-container {
             background: #fff;
             padding: 2rem;
             margin: 2rem 0;
@@ -47,25 +47,49 @@
         button:hover {
             background-color: #555;
         }
-        .profile, .message {
+        .profile, .message, .friend-request {
             border-bottom: 1px solid #ddd;
             padding: 1rem 0;
+        }
+        .profile-info, .message-info, .request-info {
+            margin: 0;
+        }
+        .user-list, .request-list {
+            list-style: none;
+            padding: 0;
+        }
+        .user-item, .request-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .user-item:last-child, .request-item:last-child {
+            border-bottom: none;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Simple Dating Website</h1>
+        <h1>Enhanced Dating Website</h1>
     </header>
     <div class="container">
         <!-- Registration Form -->
-        <div class="form-container">
+        <div class="form-container" id="registrationContainer">
             <h2>Register</h2>
             <form id="registrationForm">
-                <input type="text" id="username" placeholder="Username" required>
-                <input type="email" id="email" placeholder="Email" required>
-                <input type="password" id="password" placeholder="Password" required>
+                <input type="text" id="registerUsername" placeholder="Username" required>
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Password" required>
                 <button type="submit">Register</button>
+            </form>
+        </div>
+
+        <!-- Login Form -->
+        <div class="form-container" id="loginContainer">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <input type="text" id="loginUsername" placeholder="Username" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button type="submit">Login</button>
             </form>
         </div>
 
@@ -75,10 +99,39 @@
             <div id="profileInfo">
                 <!-- User profile information will appear here -->
             </div>
+            <button onclick="editProfile()">Edit Profile</button>
+        </div>
+
+        <!-- Profile Editing -->
+        <div class="form-container" id="editProfileContainer">
+            <h2>Edit Profile</h2>
+            <form id="editProfileForm">
+                <input type="text" id="editUsername" placeholder="Username" required>
+                <input type="text" id="editInterests" placeholder="Interests">
+                <button type="submit">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- Search for Matches -->
+        <div class="search-container" id="searchContainer">
+            <h2>Search for Matches</h2>
+            <input type="text" id="searchInterest" placeholder="Search by interest">
+            <button onclick="searchMatches()">Search</button>
+            <ul id="matchList" class="user-list">
+                <!-- Matches will be listed here -->
+            </ul>
+        </div>
+
+        <!-- Friendship Requests -->
+        <div class="request-container" id="requestContainer">
+            <h2>Friend Requests</h2>
+            <ul id="requestList" class="request-list">
+                <!-- Friend requests will be listed here -->
+            </ul>
         </div>
 
         <!-- Messaging System -->
-        <div class="message-container">
+        <div class="message-container" id="messageContainer">
             <h2>Messages</h2>
             <div id="messageList">
                 <!-- Messages will appear here -->
@@ -91,33 +144,150 @@
     <script>
         const profileContainer = document.getElementById('profileContainer');
         const profileInfo = document.getElementById('profileInfo');
+        const editProfileContainer = document.getElementById('editProfileContainer');
+        const editProfileForm = document.getElementById('editProfileForm');
+        const searchContainer = document.getElementById('searchContainer');
+        const matchList = document.getElementById('matchList');
+        const requestContainer = document.getElementById('requestContainer');
+        const requestList = document.getElementById('requestList');
         const messageList = document.getElementById('messageList');
         const messageInput = document.getElementById('messageInput');
+        const registrationForm = document.getElementById('registrationForm');
+        const loginForm = document.getElementById('loginForm');
+        let loggedInUser = null;
+        let profiles = [];
+        let requests = [];
 
-        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+        // Register user
+        registrationForm.addEventListener('submit', function(event) {
             event.preventDefault();
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            profileInfo.innerHTML = `
-                <div class="profile">
-                    <p><strong>Username:</strong> ${username}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                </div>
-            `;
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            profiles.push({ username, email, password, interests: '' });
+            alert('Registration successful! You can now log in.');
         });
 
+        // Login user
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const user = profiles.find(p => p.username === username && p.password === password);
+            if (user) {
+                loggedInUser = user;
+                showProfile();
+            } else {
+                alert('Invalid username or password.');
+            }
+        });
+
+        // Show user profile
+        function showProfile() {
+            if (loggedInUser) {
+                profileInfo.innerHTML = `
+                    <div class="profile">
+                        <p><strong>Username:</strong> ${loggedInUser.username}</p>
+                        <p><strong>Interests:</strong> ${loggedInUser.interests}</p>
+                    </div>
+                `;
+                profileContainer.style.display = 'block';
+                editProfileContainer.style.display = 'none';
+                searchContainer.style.display = 'block';
+                requestContainer.style.display = 'block';
+                messageList.style.display = 'block';
+            }
+        }
+
+        // Edit user profile
+        function editProfile() {
+            if (loggedInUser) {
+                document.getElementById('editUsername').value = loggedInUser.username;
+                document.getElementById('editInterests').value = loggedInUser.interests;
+                editProfileContainer.style.display = 'block';
+            }
+        }
+
+        // Update profile
+        editProfileForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const newUsername = document.getElementById('editUsername').value;
+            const newInterests = document.getElementById('editInterests').value;
+            
+            loggedInUser.username = newUsername;
+            loggedInUser.interests = newInterests;
+            showProfile();
+        });
+
+        // Search for matches
+        function searchMatches() {
+            const searchTerm = document.getElementById('searchInterest').value.toLowerCase();
+            const matches = profiles.filter(p => p.interests.toLowerCase().includes(searchTerm) && p !== loggedInUser);
+            
+            matchList.innerHTML = matches.map(p => `
+                <li class="user-item">
+                    <p><strong>Username:</strong> ${p.username}</p>
+                    <p><strong>Interests:</strong> ${p.interests}</p>
+                    <button onclick="sendFriendRequest('${p.username}')">Send Friend Request</button>
+                </li>
+            `).join('');
+        }
+
+        // Send a friend request
+        function sendFriendRequest(username) {
+            const request = profiles.find(p => p.username === username);
+            if (request) {
+                requests.push({ from: loggedInUser.username, to: request.username });
+                updateRequestList();
+            }
+        }
+
+        // Update friend request list
+        function updateRequestList() {
+            requestList.innerHTML = requests.map(req => `
+                <li class="request-item">
+                    <p><strong>From:</strong> ${req.from}</p>
+                    <p><strong>To:</strong> ${req.to}</p>
+                    <button onclick="acceptRequest('${req.from}')">Accept</button>
+                    <button onclick="rejectRequest('${req.from}')">Reject</button>
+                </li>
+            `).join('');
+        }
+
+        // Accept a friend request
+        function acceptRequest(from) {
+            requests = requests.filter(req => req.from !== from);
+            alert(`Friend request from ${from} accepted.`);
+            updateRequestList();
+        }
+
+        // Reject a friend request
+        function rejectRequest(from) {
+            requests = requests.filter(req => req.from !== from);
+            alert(`Friend request from ${from} rejected.`);
+            updateRequestList();
+        }
+
+        // Send a message
         function sendMessage() {
             const message = messageInput.value.trim();
             if (message) {
                 const newMessage = document.createElement('div');
                 newMessage.className = 'message';
-                newMessage.innerHTML = `<p>${message}</p>`;
+                newMessage.innerHTML = `<p><strong>${loggedInUser.username}:</strong> ${message}</p>`;
                 messageList.appendChild(newMessage);
                 messageInput.value = '';
             }
         }
+
+        // Initialize
+        profileContainer.style.display = 'none';
+        editProfileContainer.style.display = 'none';
+        searchContainer.style.display = 'none';
+        requestContainer.style.display = 'none';
+        messageList.style.display = 'none';
     </script>
 </body>
 </html>
